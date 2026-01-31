@@ -11,22 +11,23 @@
   <link rel="apple-touch-icon" href="./icon-192.png" />
   <meta name="theme-color" content="#1f3a5f" />
 
-  <!-- ✅ Novo padrão (remove o aviso de deprecated) -->
+  <!-- remove aviso deprecated -->
   <meta name="mobile-web-app-capable" content="yes" />
 
-  <!-- ✅ Mantém compatibilidade iOS -->
+  <!-- iOS -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-<!-- Tailwind -->
-<script src="https://cdn.tailwindcss.com"></script>
 
-<!-- React e Babel -->
-<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
 
-<!-- Ícones -->
-<script src="https://unpkg.com/lucide@latest"></script>
+  <!-- React e Babel (sem defer) -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Ícones -->
+  <script src="https://unpkg.com/lucide@latest"></script>
 
   <!-- Fonte -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
@@ -63,10 +64,18 @@
     };
 
     const formatBRL = (v) =>
-      (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 4, maximumFractionDigits: 4 });
+      (v || 0).toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+        minimumFractionDigits: 4,
+        maximumFractionDigits: 4
+      });
 
     const formatPct = (v) =>
-      (v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 4 }) + '%';
+      (v || 0).toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 4
+      }) + '%';
 
     // Ícones (Lucide)
     const Icon = ({ name, size = 18, className = "" }) => {
@@ -185,7 +194,235 @@
 
       return (
         <div className="min-h-screen pb-32">
-          {/* ... seu JSX continua exatamente igual daqui pra baixo ... */}
+          {/* Top Bar */}
+          <header className="p-4 bg-slate-900/90 border-b border-slate-800 sticky top-0 z-50 backdrop-blur-xl flex items-center justify-between shadow-2xl">
+            <div>
+              <h1 className="text-xl font-black bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent">CUSTO REAL</h1>
+              <p className="text-[9px] text-slate-500 uppercase font-black tracking-[0.2em]">Samuel Mafra • Premium v3</p>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={handleExportCSV} disabled={results.length === 0} className="p-2.5 bg-slate-800 rounded-2xl disabled:opacity-20 hover:bg-slate-700 transition-all">
+                <Icon name="download" size={18} className="text-emerald-400" />
+              </button>
+              <button onClick={handleReset} className="p-2.5 bg-slate-800 rounded-2xl hover:bg-red-900/20 transition-all group">
+                <Icon name="rotate-ccw" size={18} className="text-slate-500 group-hover:text-red-400" />
+              </button>
+            </div>
+          </header>
+
+          <main className="max-w-6xl mx-auto p-4 space-y-6">
+            {/* Global Config */}
+            <section className="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-6 shadow-2xl relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-8 opacity-5">
+                <Icon name="settings-2" size={120} />
+              </div>
+              <div className="relative z-10 flex flex-col md:flex-row gap-6 items-end">
+                <div className="w-full md:w-64">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 block mb-2">Taxa Financeira Global (% a.m.)</label>
+                  <input
+                    type="number"
+                    step="0.0001"
+                    value={globals.taxaFin}
+                    onChange={e => setGlobals({ taxaFin: parseFloat(e.target.value) || 0 })}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-2xl px-6 py-4 text-2xl font-black text-blue-400 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
+                  />
+                </div>
+                <button onClick={handleCalculate} className="w-full md:flex-1 bg-blue-600 hover:bg-blue-500 py-5 rounded-2xl font-black text-white flex items-center justify-center gap-3 transition-all shadow-xl shadow-blue-900/20 active:scale-95">
+                  <Icon name="calculator" size={24} /> CALCULAR COMPARATIVO
+                </button>
+              </div>
+            </section>
+
+            {/* Suppliers Grid */}
+            <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {suppliers.map((s, idx) => (
+                <div key={s.id} className="bg-slate-900/50 border border-slate-800/80 rounded-[2rem] p-6 space-y-5 hover:border-slate-600 transition-all group animate-fade-in">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-400 font-black text-[10px]">{idx + 1}</div>
+                      <input
+                        className="bg-transparent font-black text-slate-100 outline-none focus:text-blue-400 text-lg w-full"
+                        value={s.nome}
+                        onChange={e => handleUpdateSupplier(s.id, 'nome', e.target.value)}
+                      />
+                    </div>
+                    <button onClick={() => handleRemoveSupplier(s.id)} className="text-slate-700 hover:text-red-500 p-2 transition-colors">
+                      <Icon name="trash-2" size={18} />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-4">
+                    <div className="col-span-2 sm:col-span-1">
+                      <label className="text-[9px] text-slate-500 font-black uppercase tracking-widest ml-1 mb-1 block">Valor Unitário (R$)</label>
+                      <input
+                        type="number"
+                        value={s.valor || ''}
+                        onChange={e => handleUpdateSupplier(s.id, 'valor', parseFloat(e.target.value) || 0)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-bold focus:border-blue-500 outline-none transition-all"
+                        placeholder="0,0000"
+                      />
+                    </div>
+
+                    <div className="col-span-2 sm:col-span-1">
+                      <label className="text-[9px] text-slate-500 font-black uppercase tracking-widest ml-1 mb-1 block">Prazo Pag. (Dias)</label>
+                      <input
+                        type="number"
+                        value={s.prazo || ''}
+                        onChange={e => handleUpdateSupplier(s.id, 'prazo', parseInt(e.target.value) || 0)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-bold focus:border-blue-500 outline-none transition-all"
+                        placeholder="0"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[9px] text-slate-500 font-black uppercase tracking-widest ml-1 mb-1 block">IPI (%)</label>
+                      <input
+                        type="number"
+                        value={s.ipi}
+                        onChange={e => handleUpdateSupplier(s.id, 'ipi', parseFloat(e.target.value) || 0)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs font-medium focus:border-blue-500 outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[9px] text-slate-500 font-black uppercase tracking-widest ml-1 mb-1 block">Frete (%)</label>
+                      <input
+                        type="number"
+                        value={s.frete}
+                        onChange={e => handleUpdateSupplier(s.id, 'frete', parseFloat(e.target.value) || 0)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs font-medium focus:border-blue-500 outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[9px] text-red-500/50 font-black uppercase tracking-widest ml-1 mb-1 block">PIS (%)</label>
+                      <input
+                        type="number"
+                        value={s.pis}
+                        onChange={e => handleUpdateSupplier(s.id, 'pis', parseFloat(e.target.value) || 0)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs font-medium focus:border-blue-500 outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[9px] text-red-500/50 font-black uppercase tracking-widest ml-1 mb-1 block">COFINS (%)</label>
+                      <input
+                        type="number"
+                        value={s.cofins}
+                        onChange={e => handleUpdateSupplier(s.id, 'cofins', parseFloat(e.target.value) || 0)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs font-medium focus:border-blue-500 outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              <button onClick={handleAddSupplier} className="py-12 border-2 border-dashed border-slate-800 rounded-[2rem] text-slate-600 font-black flex flex-col items-center justify-center gap-3 hover:border-blue-500/40 hover:text-blue-400 hover:bg-blue-500/5 transition-all group">
+                <Icon name="plus" size={32} className="group-hover:scale-110 transition-transform" />
+                <span className="text-xs uppercase tracking-[0.2em]">Adicionar Fornecedor</span>
+              </button>
+            </section>
+
+            {/* Results */}
+            {results.length > 0 && (
+              <section id="results-area" className="pt-10 space-y-8 animate-fade-in">
+                <div className="flex items-center gap-3 text-blue-400">
+                  <Icon name="bar-chart-3" size={24} />
+                  <h2 className="text-xl font-black uppercase tracking-tighter">Análise de Resultados</h2>
+                </div>
+
+                {/* Winner Card */}
+                <div className="bg-gradient-to-br from-green-600/30 via-emerald-600/10 to-transparent border border-green-500/20 p-8 rounded-[2.5rem] flex items-center gap-8 shadow-2xl relative overflow-hidden">
+                  <div className="absolute -right-4 -bottom-4 opacity-10 rotate-12">
+                    <Icon name="trophy" size={180} />
+                  </div>
+                  <div className="bg-green-500 p-6 rounded-3xl shadow-2xl shadow-green-900/50 relative z-10">
+                    <Icon name="trophy" size={48} className="text-white" />
+                  </div>
+                  <div className="relative z-10">
+                    <p className="text-green-500 text-[10px] font-black uppercase tracking-[0.3em] mb-1">Vencedor por Custo Real</p>
+                    <h3 className="text-3xl font-black text-white leading-none mb-2">{results[0].nome}</h3>
+                    <p className="text-green-400 font-black text-2xl tracking-tighter">
+                      {formatBRL(results[0].Final)}
+                      <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold ml-2">por unidade</span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Full Table */}
+                <div className="overflow-x-auto rounded-[2rem] border border-slate-800 bg-slate-900/40 backdrop-blur-md custom-scroll shadow-inner">
+                  <table className="w-full text-left border-collapse min-w-[1450px]">
+                    <thead>
+                      <tr className="bg-slate-900 border-b border-slate-800">
+                        <th className="p-5 text-[10px] font-black text-slate-500 uppercase tracking-widest sticky left-0 bg-slate-900 z-10">Fornecedor</th>
+                        <th className="p-5 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Valor Bruto</th>
+                        <th className="p-5 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">IPI</th>
+                        <th className="p-5 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">PIS</th>
+                        <th className="p-5 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">COF.</th>
+                        <th className="p-5 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Prazo</th>
+                        <th className="p-5 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Frete</th>
+                        <th className="p-5 text-[10px] font-black text-blue-400 uppercase tracking-widest text-right bg-blue-500/5">VP Valor (A)</th>
+                        <th className="p-5 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Cust. IPI (D)</th>
+                        <th className="p-5 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Frete VP (E)</th>
+                        <th className="p-5 text-[10px] font-black text-red-400/50 uppercase tracking-widest text-right">PIS Adj (B)</th>
+                        <th className="p-5 text-[10px] font-black text-red-400/50 uppercase tracking-widest text-right">COF Adj (C)</th>
+                        <th className="p-5 text-[10px] font-black text-blue-400 uppercase tracking-widest text-right bg-blue-500/10">FINAL</th>
+                        <th className="p-5 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">RANK</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/50 font-mono">
+                      {results.map((r, i) => (
+                        <tr key={r.id} className={`transition-colors ${i === 0 ? 'bg-green-500/5' : 'hover:bg-slate-800/30'}`}>
+                          <td className="p-5 font-black text-slate-200 sticky left-0 bg-slate-950 sm:bg-transparent z-10 text-sm">{r.nome}</td>
+                          <td className="p-5 text-[11px] text-right text-slate-500">{formatBRL(r.valor)}</td>
+                          <td className="p-5 text-[11px] text-center text-slate-400">{formatPct(r.ipi)}</td>
+                          <td className="p-5 text-[11px] text-center text-slate-400">{formatPct(r.pis)}</td>
+                          <td className="p-5 text-[11px] text-center text-slate-400">{formatPct(r.cofins)}</td>
+                          <td className="p-5 text-[11px] text-center text-slate-100 font-black">{r.prazo}d</td>
+                          <td className="p-5 text-[11px] text-center text-slate-400">{formatPct(r.frete)}</td>
+                          <td className="p-5 text-[11px] text-right text-blue-400/80 font-black bg-blue-500/5">{formatBRL(r.A)}</td>
+                          <td className="p-5 text-[11px] text-right text-slate-400">{formatBRL(r.D)}</td>
+                          <td className="p-5 text-[11px] text-right text-slate-400">{formatBRL(r.E)}</td>
+                          <td className="p-5 text-[11px] text-right text-red-400/40">-{formatBRL(r.B)}</td>
+                          <td className="p-5 text-[11px] text-right text-red-400/40">-{formatBRL(r.C)}</td>
+                          <td className={`p-5 text-right font-black text-base bg-blue-500/10 ${i === 0 ? 'text-green-400' : 'text-blue-400'}`}>{formatBRL(r.Final)}</td>
+                          <td className="p-5 text-center">
+                            <span className={`inline-flex items-center justify-center w-8 h-8 rounded-2xl text-xs font-black ${i === 0 ? 'bg-green-500 text-white shadow-lg' : 'bg-slate-800 text-slate-500'}`}>{i + 1}</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            )}
+
+            {/* Info Footer */}
+            <footer className="p-6 bg-slate-900/40 rounded-3xl border border-slate-800/50 flex gap-4">
+              <Icon name="info" className="text-blue-500 shrink-0" size={20} />
+              <div className="space-y-2">
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
+                  Cálculo baseado em <span className="text-blue-400">Valor Presente (VP)</span>. Considera impostos ajustados pelo tempo e custo financeiro do capital parado.
+                </p>
+                <p className="text-[9px] text-slate-500 italic">
+                  Fixos Aplicados: Inflação 0% • ICMS Real 10d • Formação 15d • Frete VP 15d.
+                </p>
+              </div>
+            </footer>
+          </main>
+
+          {/* Floating FAB Mobile */}
+          <div className="fixed bottom-6 left-0 right-0 px-6 z-40 pointer-events-none sm:hidden">
+            <div className="max-w-md mx-auto pointer-events-auto">
+              <button
+                onClick={handleCalculate}
+                className="w-full bg-blue-600 active:scale-95 text-white font-black py-5 rounded-3xl shadow-[0_20px_50px_rgba(37,99,235,0.4)] flex items-center justify-center gap-3 transition-all"
+              >
+                <Icon name="calculator" size={24} />
+                CALCULAR
+              </button>
+            </div>
+          </div>
         </div>
       );
     };
@@ -204,4 +441,3 @@
   </script>
 </body>
 </html>
-
